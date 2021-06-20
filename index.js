@@ -52,6 +52,20 @@ const fetchCoord = async (admCd, rnMgtSn, udrtYn, buldMnnm, buldSlno) => {
   }
 };
 
+const fetchJusoAndCoord = async (juso, admCd, rnMgtSn, udrtYn, buldMnnm, buldSlno) => {
+  try {
+    return new Promise(async (resolve, reject) => {
+      const URI = GET_JUSO_COORD_API_URL(admCd, rnMgtSn, udrtYn, buldMnnm, buldSlno);
+      const response = await fetch(URI);
+      const coord = await response.json();
+      resolve({'juso': juso, 'coord': coord.results.juso});
+    });
+  } catch(err) {
+    console.error(err);
+  }
+};
+
+
 const express = require('express');
 
 const app = server = express();
@@ -77,6 +91,38 @@ app.post('/juso/search', async function (req, res) {
     }
   } else {
     res.send({'jusos' : {}});
+    // res.send('[ERROR] no keyword identified.');
+  }
+})
+
+app.post('/juso/search/full', async function (req, res) {
+  const variables = req.body
+  console.log(`${JSON.stringify(req.body, null, 2)}`)
+  if (variables.input.arg1.keyword) {
+    const keyword = variables.input.arg1.keyword;
+    const currentPageId = variables.input.arg1.offset + 1;
+    const countPerPage = variables.input.arg1.limit;
+    if (countPerPage > 5) {
+      const statusMessage = `[ERROR] countPerPage must be under 5. current countPerPage : ${countPerPage}`;
+      console.error(statusMessage);
+      res.send({'jusoAndCoord' : {}, 'status': statusMessage});
+      return;
+    }
+    const jusoResponse = await getJusoDoroByKeyword(keyword, currentPageId, countPerPage);
+    if (jusoResponse.ok) {
+      const _text = await jusoResponse.text();
+      const areYouHearMe = _text.substring(1, _text.length - 1);
+      const keywordJusos = JSON.parse(areYouHearMe).results.juso;
+      const jusoAndCoord = await Promise.all(keywordJusos.map(async (juso) => {
+        return fetchJusoAndCoord(juso, juso.admCd, juso.rnMgtSn, juso.udrtYn, juso.buldMnnm, juso.buldSlno);
+      }));
+
+      res.send({'jusoAndCoord': jusoAndCoord, 'status': 'normal'});
+    }
+  } else {
+    const statusMessage = `[ERROR] keyword must be exist.`;
+    console.error(statusMessage);
+    res.send({'jusoAndCoord' : {}, 'status': statusMessage});
     // res.send('[ERROR] no keyword identified.');
   }
 })
