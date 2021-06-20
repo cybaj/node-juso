@@ -25,23 +25,31 @@ const GET_JUSO_COORD_API_URL = (
   `https://www.juso.go.kr/addrlink/addrCoordApi.do?confmKey=${JUSO_COORD_API_KEY}&admCd=${admCd}&rnMgtSn=${rnMgtSn}&udrtYn=${udrtYn}&buldMnnm=${buldMnnm}&buldSlno=${buldSlno}&resultType=json`;
 
 const getJusoDoroByKeyword = async (keyword, currentPageId = 1, countPerPage = 10) => {
-  let response = await fetch(
-    GET_JUSO_DORO_API_URL(
-      keyword,
-      currentPageId.toString(),
-      countPerPage.toString(),
-    ),
-  );
-  console.log(`언니, 어 왔어 ${response.status}`);
-  return response;
+  try {
+    let response = await fetch(
+      GET_JUSO_DORO_API_URL(
+        encodeURIComponent(keyword),
+        currentPageId.toString(),
+        countPerPage.toString(),
+      ),
+    );
+    console.log(`언니, 어 왔어 ${response.status}`);
+    return response;
+  } catch(err) {
+    console.error(err);
+  }
 };
 
 const fetchCoord = async (admCd, rnMgtSn, udrtYn, buldMnnm, buldSlno) => {
-  let response = await fetch(
-    GET_JUSO_COORD_API_URL(admCd, rnMgtSn, udrtYn, buldMnnm, buldSlno),
-  );
-  console.log(`언니, 어 왔어 ${response.status}`);
-  return response;
+  try {
+    let response = await fetch(
+      GET_JUSO_COORD_API_URL(admCd, rnMgtSn, udrtYn, buldMnnm, buldSlno),
+    );
+    console.log(`언니, 어 왔어 ${response.status}`);
+    return response;
+  } catch(err) {
+    console.error(err);
+  }
 };
 
 const express = require('express');
